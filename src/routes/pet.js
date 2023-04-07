@@ -23,7 +23,7 @@ router.put('/:petId', updatePet);
 router.post('/add', addPet);
 router.post('/:petId/images', uploadImage.array('pictures'), addPictures);
 router.post('/:petId/like', is_auth, addToLike);
-router.post('/:petId/adopt', adoptPet);
+router.post('/:petId/adopt', is_auth, adoptPet);
 router.post('/:petId/shelters/:shelterId', addPetToShelter); 
 router.delete('/:petId', removePet);
 router.delete('/:petId/remove', is_auth, removeFromLike);

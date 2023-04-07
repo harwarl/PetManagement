@@ -29,7 +29,7 @@ export const addPet = asyncHandler(async(req, res, next)=>{
         coatLength : coatLength
     });
 
-    return res.status(201).json({status: true, message: 'New pet added to DB', data: new_pet});
+    return res.status(SC.Created).json({status: true, message: 'New pet added to DB', data: new_pet});
 })
 
 //add pet pictures
@@ -71,10 +71,10 @@ export const addPictures = asyncHandler(async(req, res, next)=>{
             Logging.info('Could not add images to DB');
         }
 
-        return res.status(SC.Accepted).json({status: true, message: 'Images added successfully', data: petPictures});
+        return res.status(SC.OK).json({status: true, message: 'Images added successfully', data: petPictures});
     }
 
-    return res.status(SC.Accepted).json({status: true, message: 'Picture was not uploaded'})
+    return res.status(SC.OK).json({status: true, message: 'Picture was not uploaded'})
 
 })
 
@@ -91,7 +91,7 @@ export const removePictures = asyncHandler(async(req, res, next)=>{
 
     const image_removed = await pet_exists.save();
 
-    return res.status(SC.Accepted).json({status: true, message: "image remved", data: image_removed})
+    return res.status(SC.OK).json({status: true, message: "image remved", data: image_removed})
 
 })
 
@@ -122,7 +122,7 @@ export const updatePet = asyncHandler(async(req, res, next)=>{
         }}, { new: true}
     )
 
-    return res.status(200).json({status:true,message:"Data updated", data: pet_updated});
+    return res.status(SC.OK).json({status:true,message:"Data updated", data: pet_updated});
 
 })
 
@@ -132,7 +132,7 @@ export const removePet = asyncHandler(async(req, res, next)=>{
 
     const pet_removed = await Pet.findOneAndRemove({_id: petId});
 
-    return res.status(SC.Accepted).json({status: true,message: 'Pet removed', data: pet_removed});
+    return res.status(SC.OK).json({status: true,message: 'Pet removed', data: pet_removed});
 })
 
 //View Pet Details
@@ -143,7 +143,7 @@ export const petDetails = asyncHandler(async(req, res, next)=>{
     if(!pet_found){
         return res.status(SC.NotFound).json({status: true, message: "Invalid ID"});
     }
-    return res.status(SC.Accepted).json({status: true, message: "Pet Details", data: pet_found});
+    return res.status(SC.OK).json({status: true, message: "Pet Details", data: pet_found});
 
 
 })
@@ -170,7 +170,7 @@ export const  addToLike = asyncHandler(async(req, res, next)=>{
     user.likedPet.push(new mongoose.Types.ObjectId(pet_found._id));
     const user_saved = await user.save();
     
-    return res.status(SC.Accepted).json({
+    return res.status(SC.OK).json({
         status: true,
         message: "Added Pet to Likes",
         data: user
@@ -182,7 +182,7 @@ export const  addToLike = asyncHandler(async(req, res, next)=>{
 
 //Remove Pet from User Likes
 export const  removeFromLike = asyncHandler(async(req, res, next)=>{
-    let userId = '642dea75d7c0fea3a61c9b37';
+    let userId = req.userId;
     const { petId } = req.params;
 
     const pet_found = await Pet.findById(petId);
@@ -195,7 +195,7 @@ export const  removeFromLike = asyncHandler(async(req, res, next)=>{
     });
     const removed_pet = await user.save();
 
-    return res.status(SC.Accepted).json({
+    return res.status(SC.OK).json({
         status: true,
         message: "Added Pet to Likes",
         data: removed_pet
@@ -207,7 +207,7 @@ export const  removeFromLike = asyncHandler(async(req, res, next)=>{
 
 //Adopt Pet
 export const adoptPet = asyncHandler(async(req, res, next)=>{
-    let userId = '642dea75d7c0fea3a61c9b37';
+    let userId = req.userId;
     const { petId } = req.params;
 
     const pet_found = await Pet.findById(petId);
@@ -250,9 +250,9 @@ export const addPetToShelter = asyncHandler(async(req, res, next)=>{
   };
 
   pet_data.shelter = new mongoose.Types.ObjectId(shelter_data._id);
-  const saved_pet = await pet_data.save();
+  await pet_data.save();
   shelter_data.pets.push([new mongoose.Types.ObjectId(pet_data._id)]);
-  const saved_shelter = await shelter_data.save();
+  await shelter_data.save();
   return res.status(SC.OK).json({status: true, message: "Pet added Shelter"});
 
 })
