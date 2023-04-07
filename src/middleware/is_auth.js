@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { SC } from '../utils/statusCode.js';
+import { Logging } from '../utils/Logging.js';
 
 const is_auth = function (req, res, next){
     const authHeader = req.get("Authorization");
@@ -14,18 +15,18 @@ const is_auth = function (req, res, next){
 
     let decoded;
     try{
-        console.log(decoded);
         decoded = jwt.verify(token, "EatetheCow");
-        console.log(decoded);
         if(!decoded){
             return res.status(SC.UnAuthorized).json({status: false, message: 'Invalid Token'})
         } 
+        console.log(decoded);
         req.userId = decoded.id;
         next();
     } catch(err){
         if(err.message.toString().includes('expired')){
             return res.status(SC.UnAuthorized).json({status: false, message: 'Token Expired, PLease Login'})
         }
+        return res.status(SC.UnAuthorized).json({status: false, message: 'Invalid Token'})
     }
 }
 

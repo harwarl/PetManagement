@@ -150,7 +150,6 @@ export const petDetails = asyncHandler(async(req, res, next)=>{
 
 //Add Pet to User Likes
 export const  addToLike = asyncHandler(async(req, res, next)=>{
-    console.log(req.user_id);
     const { petId } = req.params;
 
     const pet_found = await Pet.findById(petId);
@@ -159,7 +158,7 @@ export const  addToLike = asyncHandler(async(req, res, next)=>{
     }
 
     const petObjectId = new mongoose.Types.ObjectId(petId);
-    const user = await User.findOne({_id: req.user_id});
+    const user = await User.findOne({_id: req.userId});
     const indexPet = user.likedPet.findIndex((p)=>{
         p.id.toString() === pet_found._id.toString();
     });
