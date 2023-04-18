@@ -7,12 +7,20 @@ import { Logging } from './src/utils/Logging.js';
 import { error } from './src/middleware/error.js';
 import cors from 'cors';
 import { bootstrap } from './src/routes/index.js';
+import swaggerJsDoc from 'swagger-jsdoc';
+import fs from 'fs';
+import swaggerUI from 'swagger-ui-express';
 import { SC } from './src/utils/statusCode.js';
+import YAML from 'yamljs';
 const dbUrl = 'mongodb://127.0.0.1:27017/PetManagement'
 
-connect({ dbUrl });
+const file  = fs.readFileSync('./swagger.yaml', 'utf8')
+const swaggerYaml = YAML.parse(file);
+
 const app = express();
 
+//middleware for swagger
+app.use('/api_docs', swaggerUI.serve, swaggerUI.setup(swaggerYaml));
 //set Up logger
 app.use((req, res, next)=>{
     Logging.info(`Incoming -> Method: [${req.method}] - Url: [${req.url}] - IP: [${req.socket.remoteAddress}]`);
@@ -38,13 +46,14 @@ app.use(cors({
 app.use((req, res, next) => {
     res.setHeader('Allow-Control-Access-Origin', '*');
     res.setHeader('Allow-Control-Access-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS'),
-    res.setHeader('Allow-Control-Access-Headers', 'Content-type, Authorization'),
+    res.setHeader('Allow-Control-Access-Headers', 'Content-type, api_key, Authorization'),
     res.setHeader('Allow-Control-Access-Credentials', true);
     next();
 });
 
 
 app.use(error);
+
 bootstrap(app);
 
 app.use('*', (req, res, next) => {
@@ -58,4 +67,6 @@ app.use('*', (req, res, next) => {
 
 app.listen(config.PORT, () => {
     Logging.info(`App is running on port ${config.PORT}`);
+    
+    connect({ dbUrl });
 })

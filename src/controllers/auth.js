@@ -6,14 +6,19 @@ import { SC } from '../utils/statusCode.js';``
 import asyncHandler from 'express-async-handler';
 import { User } from '../models/user.js';
 import zipcodes from 'zipcodes';
+import pkg from 'lodash';
+import {
+    createSession, updateSession, createAccessToken
+} from '../services/session.services.js'
+import { createUser, validatePassword } from '../services/user.services.js';
+import { signToken } from '../utils/jwt.utils.js';
+
+const { get, omit } = pkg;
 
 export const signUp = asyncHandler(async(req, res, next)=>{
     const {
-        firstName,
-        lastName, 
         username,
         email,
-        password, 
         zipCode
     } = req.body;
 
@@ -34,15 +39,18 @@ export const signUp = asyncHandler(async(req, res, next)=>{
 
     const country = zipcode.country;
 
-    const user = await User.create({
-        firstName: firstName,
-        lastName: lastName, 
-        username: username,
-        email: email,
-        password: password, 
-        zipCode: zipCode,
-        country: country
-    })
+    const user = await createUser({...req.body, country: country});
+    console.log(user);
+
+    // const user = await User.create({
+    //     firstName: firstName,
+    //     lastName: lastName, 
+    //     username: username,
+    //     email: email,
+    //     password: password, 
+    //     zipCode: zipCode,
+    //     country: country
+    // })
 
     const emailToken = jwt.sign({email: user.email, id: user._id}, 'emailTokenSecret', { expiresIn: '20m'});
 
@@ -64,21 +72,19 @@ export const signUp = asyncHandler(async(req, res, next)=>{
 })
 
 export const login = asyncHandler(async(req, res, next)=>{ 
-    const { 
-        email, 
-        password 
-    } = req.body;
+    const user = await validatePassword(req.body);
 
-    const user_exists = await User.FindByCredentials(email, password, res);
-    if(user_exists){
-        const token = user_exists.generateAuthToken();
-        res.cookie('jwt-token', token, {httpOnly: true, maxAge: 24 * 60 * 60});
-        res.setHeader('Authorization', `Bearer ${token}`);
-        return res.status(200).json({status: true, message: 'Logged In', data: user_exists});
+    if(!user){
+        return res.status(401).json({status: false, message: "Invalid email or password"});
     }
 
+    const userAgent = req.get('user-agent');
+    const session = await createSession(user, userAgent || "");
+    
+    const accessToken  = await createAccessToken({user, session});
+    const refreshToken = await signToken(session , {expiresIn: '1y'});
 
-
+    return res.status(200).json({accessToken, refreshToken})
 })
 
 export const verifyEmail = asyncHandler(async(req, res, next)=>{
@@ -109,16 +115,11 @@ export const verifyEmail = asyncHandler(async(req, res, next)=>{
 
 })
 
-export const resetPassword = (req, res, next)=>{
+export const logout = async(req, res, next)=>{
+    //invalidate user session
+    const sessionId = get(req, "user.session");
 
-}
+    await updateSession({_id : sessionId}, { valid: false});
 
-export const forgotPassword = (req, res, next) =>{
-
-}
-
-export const logout = (req, res, next)=>{
-    res.clearCookie('jwt-token');
-    res.setHeader['Authorization', ``];
-    return res.status(SC.Accepted).json({status: true, message: 'logout Successful'})
+    return res.status(200).json({status: true, message: "logged Out"})
 }

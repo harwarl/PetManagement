@@ -158,7 +158,7 @@ export const  addToLike = asyncHandler(async(req, res, next)=>{
     }
 
     const petObjectId = new mongoose.Types.ObjectId(petId);
-    const user = await User.findOne({_id: req.userId});
+    const user = await User.findOne({_id: req.user._id});
     const indexPet = user.likedPet.findIndex((p)=>{
         p.id.toString() === pet_found._id.toString();
     });
@@ -182,14 +182,13 @@ export const  addToLike = asyncHandler(async(req, res, next)=>{
 
 //Remove Pet from User Likes
 export const  removeFromLike = asyncHandler(async(req, res, next)=>{
-    let userId = req.userId;
     const { petId } = req.params;
 
     const pet_found = await Pet.findById(petId);
     if(!pet_found){
         return res.status(SC.NotFound).json({status: true, message: "Invalid ID"});
     }
-    const user = await User.findById(userId);
+    const user = await User.findById(req.user._id);
     user.likedPet = user.likedPet.filter((p)=>{
         p.id !== petId
     });

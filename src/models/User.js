@@ -1,7 +1,5 @@
 import { Schema, model } from 'mongoose';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { Logging } from '../utils/Logging.js';
 
 const userSchema = new Schema({
     firstName: {
@@ -35,6 +33,11 @@ const userSchema = new Schema({
         type: Number,
         required: true
     },
+    
+    isAdmin: {
+        type: Boolean,
+        default: true
+    },
 
     verified: {
         type: Boolean,
@@ -65,19 +68,9 @@ userSchema.pre('save', async function(next){
     next();
 });
 
-userSchema.statics.FindByCredentials = async function(email, password, res){
-    const user = await User.findOne({ email: email });
-    if(!user) return res.status(401).json({status: false, message: "Email not registered"});
-
-    const isValid = await bcrypt.compare(password, user.password);
-    if(!isValid) return res.status(401).json({status: false, message: "Wrong Password"});
-
-    return user;
-}
-
-userSchema.methods.generateAuthToken = function(){
-    const token = jwt.sign({ id: this._id, email: this.email}, "EatetheCow", {expiresIn: '1h'});
-    return token;
+userSchema.methods.comparePassword = async function(password){
+    const user = this;
+    return bcrypt.compare(password, user.password).catch((e)=> {return false});
 }
 
 export const User = model('User', userSchema);

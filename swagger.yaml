@@ -1,0 +1,164 @@
+swagger: '2.0'
+info: 
+  title: PET MANAGEMENT API,
+  version: 1.0.0,
+  description: An Api that allows you to get pet and shelter infomation
+tags:
+  - name: auth
+    description: handles all auth related endpoints 
+servers: http://localhost:3000
+apis: ./src/routes/*.js
+
+paths:
+  /api/auth/signup:
+    post:
+      summary: Signs up a new user
+      description: Post the signup details of the User
+      tags: 
+      - auth
+      consumes: 
+        - application/json
+      prepares:
+        - application/json
+      parameters:
+        - in: body
+          firstName: Dokun
+          lastName: Doe
+          username: Akun
+          email: jondoe@gmail.com
+          password: Iganmode@2156
+          zipCode: '90210'
+          schema:
+            $ref: '#/definitions/User'
+
+      responses:
+        '201':
+          description: User Registered
+          schema:
+            $ref: '#/definitions/User'
+        '400': 
+          description: Email or Username Already in Use or Wrong Zipcode
+        '500':
+          description: Server Error
+
+  /api/auth/login:
+    post:
+      summary: logs in a user
+      description: Logs in a new user and create access and refresh tokens
+      tags: 
+        - auth
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          email: jondoe@gmail.com
+          password: Iganmode@2156
+          schema:
+            $ref: '#/definitions/User'
+      
+      responses:
+        '401':
+          description: Invalid Email or Password
+        '200':
+          description: Logged In
+
+  /api/auth/verify/{emailToken}:
+    post:
+      summary: Verify User email
+      description: Verifies User's email using the token
+      tags:
+        - auth
+      produces:
+        - application/json
+      parameters:
+        - name: emailToken
+          in: path
+          description: The email token
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      
+      responses:
+        '401':
+          description: Invalid or Expired Token
+        '400':
+          description: Email already Verified
+        '200':
+          description: Email Verified
+          schema:
+            $ref: '#/definitions/User'
+
+  /api/auth/logout:
+    post:
+      summary: logs out user
+      description: deletes user session
+      tags:
+        - auth
+      consumes:
+        - application/json
+      parameters:
+        - name: authorization
+          in: header
+          description: access token
+          required: true
+          type: string,
+          default: Bearer {accessToken}
+      
+      responses:
+        '200':
+          description: logged out
+
+
+  
+
+definitions:
+  User:
+    type: object
+    required:
+      - firstName
+      - lastName
+      - username
+      - email
+      - password
+      - zipCode
+    properties:
+      id: 
+        type: string
+        description: the auto generated Id
+      firstName:
+        type: string
+        description: User's first Name
+      lastName:
+        type: string
+        description: User's last Name
+      username:
+        type: string
+        description: User's choosen username
+      email:
+        type: string
+        description: User's Email
+      password: 
+        type: string
+        description: User's password
+      zipCode:
+        type: string
+        description: User's location zipcode
+      isAdmin:
+        type: boolean
+        description: sets True is User is an Admin and false if not
+      verified: 
+        type: boolean
+        description: defaults to false, sets to true when User verifies email
+      country:
+        type: string
+        description: User's Country
+      likedPet:
+        type: array
+        description: contains Ids of pets User likes
+      adoptedPet: 
+        type: array
+        description: contains Ids of pets User adopts
+
+  
